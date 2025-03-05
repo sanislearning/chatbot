@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat with Lumi ✨</title>
+    <style>
+        /* General Styles */
+        body {
+            font-family: 'Poppins', sans-serif;
+            color: #fff;
+            text-align: center;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background: linear-gradient(-45deg, #1e3a8a, #7b61ff, #1e3a8a);
+            background-size: 300% 300%;
+            animation: gradientShift 10s ease infinite;
+        }
+
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* Chatbox with Glassmorphism Effect */
+        #chatbox {
+            width: 90%;
+            max-width: 900px;
+            height: 75vh;
+            background: rgba(0, 0, 0, 0.6); /* Semi-transparent black */
+            backdrop-filter: blur(15px);
+            border-radius: 20px;
+            padding: 20px;
+            overflow-y: auto;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 0 20px rgba(255, 255, 255, 0.2);
+            font-size: 20px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Chat Messages */
+        .message {
+            padding: 15px;
+            border-radius: 20px;
+            margin: 10px 0;
+            max-width: 75%;
+            font-size: 20px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            display: inline-block;
+            opacity: 0;
+            animation: fadeIn 0.5s ease-in forwards;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .user {
+            background: linear-gradient(135deg, #007bff, #00d4ff);
+            align-self: flex-end;
+            text-align: right;
+            color: white;
+            margin-left: auto;
+            border-radius: 20px 20px 0px 20px;
+            box-shadow: 0px 4px 10px rgba(0, 123, 255, 0.5);
+        }
+
+        .lumi {
+            background: linear-gradient(135deg, #6a11cb, #2575fc);
+            text-align: left;
+            color: #fff;
+            margin-right: auto;
+            border-radius: 20px 20px 20px 0px;
+            box-shadow: 0px 4px 10px rgba(106, 17, 203, 0.5);
+        }
+
+        /* Input Box */
+        #inputContainer {
+            display: flex;
+            width: 90%;
+            max-width: 900px;
+            margin-top: 15px;
+        }
+
+        #userInput {
+            flex: 1;
+            padding: 18px;
+            border-radius: 10px;
+            border: none;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            outline: none;
+            font-size: 20px;
+            backdrop-filter: blur(10px);
+        }
+
+        button {
+            padding: 18px;
+            margin-left: 15px;
+            background: linear-gradient(135deg, #007bff, #00d4ff);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 20px;
+            transition: all 0.3s ease;
+        }
+
+        button:hover {
+            background: linear-gradient(135deg, #0056b3, #00a3cc);
+            transform: scale(1.05);
+        }
+    </style>
+</head>
+<body>
+    <h1>Chat with Lumi ✨</h1>
+    <div id="chatbox"></div>
+
+    <div id="inputContainer">
+        <input type="text" id="userInput" placeholder="Type a message..." onkeypress="handleKeyPress(event)">
+        <button onclick="sendMessage()">Send</button>
+    </div>
+
+    <script>
+        function sendMessage() {
+            let userInput = document.getElementById("userInput").value;
+            let chatbox = document.getElementById("chatbox");
+
+            if (!userInput) return;
+
+            // Add user message to chat
+            let userMessage = document.createElement("div");
+            userMessage.classList.add("message", "user");
+            userMessage.innerHTML = `<b>You:</b> ${userInput}`;
+            chatbox.appendChild(userMessage);
+            chatbox.scrollTop = chatbox.scrollHeight;
+
+            document.getElementById("userInput").value = "";
+
+            fetch("/chat", {  
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ message: userInput })
+            })
+            .then(response => response.json())
+            .then(data => {
+                let formattedResponse = formatBotResponse(data.response);
+                let botMessage = document.createElement("div");
+                botMessage.classList.add("message", "lumi");
+                botMessage.innerHTML = `<b>Lumi:</b><br>${formattedResponse}`;
+                chatbox.appendChild(botMessage);
+                chatbox.scrollTop = chatbox.scrollHeight;
+            })
+            .catch(error => console.error("Error:", error));
+        }
+
+        // Format Lumi's response to add line breaks & bullet points
+        function formatBotResponse(response) {
+            return response
+                .replace(/\*\*(.*?)\*\*/g, "<b>$1</b>") // Bold formatting
+                .replace(/\n/g, "<br>"); // Line breaks
+        }
+
+        // Allow sending message by pressing Enter
+        function handleKeyPress(event) {
+            if (event.key === "Enter") {
+                sendMessage();
+            }
+        }
+    </script>
+</body>
+</html>
